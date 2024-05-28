@@ -260,6 +260,9 @@ class L1Controller(cp.Component):
             return 0
         if soc < self.config.battery_set:
             return self.power
+        if soc > 0.7 and electricity_target <0:
+            return self.power * (-1)
+                
         if electricity_target > self.config.lower_threshold_charging_power:
             return min(electricity_target, self.power)
         return 0
@@ -283,15 +286,19 @@ class L1Controller(cp.Component):
                 electricity_target=electricity_target,
             )
             self.processed_state = self.state.clone()
-        stsv.set_output_value(self.p_set_channel, self.state.power)
+        stsv.set_output_value(self.p_set_channel, self.state.power) # to car battery
 
-        ac_battery_power = stsv.get_input_value(self.ac_battery_power_channel)
-        if ac_battery_power > 0:
-            # charging of EV
-            stsv.set_output_value(self.battery_charging_power_to_ems_channel, ac_battery_power)
-        else:
-            # no charging of EV
-            stsv.set_output_value(self.battery_charging_power_to_ems_channel, 0)
+        ac_battery_power = stsv.get_input_value(self.ac_battery_power_channel) # comes from car battery
+        # if ac_battery_power > 0:
+        #     # charging of EV
+        #     stsv.set_output_value(self.battery_charging_power_to_ems_channel, ac_battery_power) # goes to EMS 
+        # else: 
+        #     # if self.state.power < 0 and car_location == self.charging_location:
+        #     #         # discharrge of EV due to bidirectional charging
+        #     #         stsv.set_output_value(self.battery_charging_power_to_ems_channel, self.state.power)  # goes to EMS 
+        #     # else:
+        #     #     # no charging of EV
+        stsv.set_output_value(self.battery_charging_power_to_ems_channel, ac_battery_power)  # goes to EMS 
 
     def build(
         self,

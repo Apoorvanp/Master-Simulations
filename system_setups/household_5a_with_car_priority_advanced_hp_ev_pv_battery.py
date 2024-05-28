@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from os import listdir
 from pathlib import Path
 from typing import Any, List, Optional
+import glob
 
 from dataclasses_json import dataclass_json
 from utspclient.helpers.lpgdata import (
@@ -116,7 +117,7 @@ class HouseholdAdvancedHpEvPvBatteryConfig(SystemSetupConfigBase):
             # heatpump_controllable=False,
             surplus_control=False,
             surplus_control_building_temperature_modifier=False,
-            surplus_control_car=False,
+            surplus_control_car=True,
             # simulation_parameters=SimulationParameters.one_day_only(2022),
             # total_base_area_in_m2=121.2,
             occupancy_config=loadprofilegenerator_utsp_connector.UtspLpgConnectorConfig(
@@ -370,7 +371,7 @@ def setup_function(
 
     # Build Electric Vehicle(s)
     # get names of all available cars
-    filepaths = listdir(utils.HISIMPATH["utsp_results"])
+    filepaths = glob.glob(utils.HISIMPATH["utsp_results"] + "/**", recursive=True)
     filepaths_location = [elem for elem in filepaths if "CarLocation." in elem]
     names = [elem.partition(",")[0].partition(".")[2] for elem in filepaths_location]
 

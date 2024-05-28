@@ -509,12 +509,17 @@ class L2GenericEnergyManagementSystem(dynamic_component.DynamicComponent):
                 available_surplus_electricity_in_watt - electricity_demand_from_current_input_component_in_watt
             )
 
+        elif current_component_type == lt.ComponentType.CAR_BATTERY:
+            stsv.set_output_value(output=current_output, value=available_surplus_electricity_in_watt)
+            available_surplus_electricity_in_watt = (
+                available_surplus_electricity_in_watt - electricity_demand_from_current_input_component_in_watt
+            )
+
         # these are electricity CONSUMERS
         elif current_component_type in [
             lt.ComponentType.RESIDENTS,
             lt.ComponentType.ELECTROLYZER,
             lt.ComponentType.SMART_DEVICE,
-            lt.ComponentType.CAR_BATTERY,
             lt.ComponentType.HEAT_PUMP_DHW,
             lt.ComponentType.HEAT_PUMP,
             lt.ComponentType.HEAT_PUMP_BUILDING,

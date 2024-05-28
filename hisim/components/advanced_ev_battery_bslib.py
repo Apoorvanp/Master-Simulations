@@ -214,22 +214,33 @@ class CarBattery(Component):
         soc = self.state.soc
 
         # Simulate battery charging
-        if p_set >= 0:
-            results = self.bat.simulate(p_load=p_set, soc=soc, dt=seconds_per_timestep)
-            p_bs = results[0]
-            p_bat = results[1]
-            soc = results[2]
+        # if p_set >= 0:
+        #     results = self.bat.simulate(p_load=p_set, soc=soc, dt=seconds_per_timestep)
+        #     p_bs = results[0]
+        #     p_bat = results[1]
+        #     soc = results[2]
 
-        # Simulate battery discharge without losses (this is included in the car consumption of the car component)
-        else:
-            soc = soc + (p_set * self.my_simulation_parameters.seconds_per_timestep / 3600) / (self.e_bat_custom * 1e3)
-            if soc < 0:
-                raise ValueError(
-                    "Car cannot drive, because battery is empty."
-                    + "This points towards a major problem in the battery configuration - or the consumption pattern of the car."
-                )
-            p_bs = 0
-            p_bat = 0
+        # # Simulate battery discharge without losses (this is included in the car consumption of the car component)
+        # else:
+        #     soc = soc + (p_set * self.my_simulation_parameters.seconds_per_timestep / 3600) / (self.e_bat_custom * 1e3)
+        #     if soc < 0:
+        #         raise ValueError(
+        #             "Car cannot drive, because battery is empty."
+        #             + "This points towards a major problem in the battery configuration - or the consumption pattern of the car."
+        #         )
+        #     p_bs = 0
+        #     p_bat = 0
+        results = self.bat.simulate(p_load=p_set, soc=soc, dt=seconds_per_timestep)
+        p_bs = results[0]
+        p_bat = results[1]
+        soc = results[2]
+
+        if soc < 0:
+            raise ValueError(
+                     "Car cannot drive, because battery is empty."
+                     + "This points towards a major problem in the battery configuration - or the consumption pattern of the car."
+            )
+
 
         # write values for output time series
         stsv.set_output_value(self.p_bs, p_bs)
