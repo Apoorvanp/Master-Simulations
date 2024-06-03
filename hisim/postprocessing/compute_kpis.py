@@ -42,6 +42,8 @@ class KpiTagEnumClass(Enum):
     HEATPUMP_SPACE_HEATING = "Heat Pump For Space Heating"
     HEATPUMP_DOMESTIC_HOT_WATER = "Heat Pump For Domestic Hot Water"
     RESIDENTS = "Residents"
+    CAR_BATTERY = "Car Battery"
+
 
 
 @dataclass
@@ -207,6 +209,7 @@ class KpiGenerator(JSONWizard):
         total_production_ids = []
         pv_production_ids = []
         battery_charge_discharge_ids = []
+        car_battery_charge_discharge_ids = []
 
         index: int
         output: ComponentOutput
@@ -232,7 +235,8 @@ class KpiGenerator(JSONWizard):
                     if ComponentType.BATTERY in output.postprocessing_flag:
                         battery_charge_discharge_ids.append(index)
                     elif ComponentType.CAR_BATTERY in output.postprocessing_flag:
-                        total_consumption_ids.append(index)
+                        # total_consumption_ids.append(index)
+                        car_battery_charge_discharge_ids.append(index) 
             else:
                 continue
 
@@ -251,6 +255,13 @@ class KpiGenerator(JSONWizard):
             pd.DataFrame(results.iloc[:, battery_charge_discharge_ids]).clip(lower=0).sum(axis=1)
         )
         result_dataframe["battery_discharge"] = pd.DataFrame(results.iloc[:, battery_charge_discharge_ids]).clip(
+            upper=0
+        ).sum(axis=1) * (-1)
+
+        result_dataframe["car_battery_charge"] = (
+            pd.DataFrame(results.iloc[:, car_battery_charge_discharge_ids]).clip(lower=0).sum(axis=1)
+        )
+        result_dataframe["car_battery_discharge"] = pd.DataFrame(results.iloc[:, car_battery_charge_discharge_ids]).clip(
             upper=0
         ).sum(axis=1) * (-1)
 
@@ -293,8 +304,17 @@ class KpiGenerator(JSONWizard):
             battery_losses_in_kilowatt_hour,
         ) = self.compute_battery_kpis(result_dataframe=result_dataframe)
 
+        
+        # compute car battery kpis
+        (
+            car_battery_charging_energy_in_kilowatt_hour,
+            car_battery_discharging_energy_in_kilowatt_hour,
+            car_battery_losses_in_kilowatt_hour,
+        ) = self.compute_car_battery_kpis(result_dataframe=result_dataframe)
+        
+
         # if battery losses are not zero, add to total consumption because this is what is consumed by battery indepently from charging and discharging
-        total_electricity_consumption_in_kilowatt_hour = total_electricity_consumption_in_kilowatt_hour + battery_losses_in_kilowatt_hour
+        total_electricity_consumption_in_kilowatt_hour = total_electricity_consumption_in_kilowatt_hour + battery_losses_in_kilowatt_hour + car_battery_losses_in_kilowatt_hour
 
         # make kpi entry
         total_consumtion_entry = KpiEntry(
@@ -328,6 +348,23 @@ class KpiGenerator(JSONWizard):
             name="Battery losses", unit="kWh", value=battery_losses_in_kilowatt_hour, tag=KpiTagEnumClass.BATTERY
         )
 
+        car_battery_charging_entry = KpiEntry(
+            name="Car Battery charging energy",
+            unit="kWh",
+            value=car_battery_charging_energy_in_kilowatt_hour,
+            tag=KpiTagEnumClass.BATTERY,
+        )
+        car_battery_discharging_entry = KpiEntry(
+            name="Car Battery discharging energy",
+            unit="kWh",
+            value=car_battery_discharging_energy_in_kilowatt_hour,
+            tag=KpiTagEnumClass.BATTERY,
+        )
+        car_battery_losses_entry = KpiEntry(
+            name="Car Battery losses", unit="kWh", value=car_battery_losses_in_kilowatt_hour, tag=KpiTagEnumClass.BATTERY
+        )
+
+
         # update kpi collection dict
         self.kpi_collection_dict_unsorted.update(
             {
@@ -337,6 +374,10 @@ class KpiGenerator(JSONWizard):
                 battery_charging_entry.name: battery_charging_entry.to_dict(),
                 battery_discharging_entry.name: battery_discharging_entry.to_dict(),
                 battery_losses_entry.name: battery_losses_entry.to_dict(),
+                car_battery_charging_entry.name: car_battery_charging_entry.to_dict(),
+                car_battery_discharging_entry.name: car_battery_discharging_entry.to_dict(),
+                car_battery_losses_entry.name: car_battery_losses_entry.to_dict(),
+                
             }
         )
 
@@ -356,8 +397,8 @@ class KpiGenerator(JSONWizard):
 
         if electricity_production_in_kilowatt_hour > 0:
             # account for battery
-            production_with_battery = result_dataframe["total_production"] + result_dataframe["battery_discharge"]
-            consumption_with_battery = result_dataframe["total_consumption"] + result_dataframe["battery_charge"]
+            production_with_battery = result_dataframe["total_production"] + result_dataframe["battery_discharge"] + result_dataframe["car_battery_discharge"]
+            consumption_with_battery = result_dataframe["total_consumption"] + result_dataframe["battery_charge"] + result_dataframe["car_battery_charge"]
 
             # evaluate injection and sum over time
             grid_injection_series_in_watt: pd.Series = production_with_battery - consumption_with_battery
@@ -462,6 +503,32 @@ class KpiGenerator(JSONWizard):
             battery_charging_energy_in_kilowatt_hour,
             battery_discharging_energy_in_kilowatt_hour,
             battery_losses_in_kilowatt_hour,
+        )
+    
+    def compute_car_battery_kpis(self, result_dataframe: pd.DataFrame) -> Tuple[float, float, float]:
+        """Compute battery kpis."""
+
+        if not result_dataframe["car_battery_charge"].empty:
+            car_battery_charging_energy_in_kilowatt_hour = self.compute_total_energy_from_power_timeseries(
+                power_timeseries_in_watt=result_dataframe["car_battery_charge"],
+                timeresolution=self.simulation_parameters.seconds_per_timestep,
+            )
+            car_battery_discharging_energy_in_kilowatt_hour = self.compute_total_energy_from_power_timeseries(
+                power_timeseries_in_watt=result_dataframe["car_battery_discharge"],
+                timeresolution=self.simulation_parameters.seconds_per_timestep,
+            )
+            car_battery_losses_in_kilowatt_hour = (
+                car_battery_charging_energy_in_kilowatt_hour - car_battery_discharging_energy_in_kilowatt_hour
+            )
+        else:
+            car_battery_charging_energy_in_kilowatt_hour = 0.0
+            car_battery_discharging_energy_in_kilowatt_hour = 0.0
+            car_battery_losses_in_kilowatt_hour = 0.0
+
+        return (
+            car_battery_charging_energy_in_kilowatt_hour,
+            car_battery_discharging_energy_in_kilowatt_hour,
+            car_battery_losses_in_kilowatt_hour,
         )
 
     def get_electricity_to_and_from_grid_from_electricty_meter(self) -> Tuple[Optional[float], Optional[float]]:
