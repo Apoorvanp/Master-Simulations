@@ -68,7 +68,21 @@ class CarBatteryConfig(ConfigBase):
             name="CarBattery",
             system_id="SG1",
             p_inv_custom=1e4,
-            e_bat_custom=30,
+            e_bat_custom=60,
+            source_weight=1,
+            charge=0,
+            discharge=0,
+        )
+        return config
+    
+    @classmethod
+    def get_eroller_config(cls) -> "CarBatteryConfig":
+        """Returns default configuration of a E-roller Battery."""
+        config = CarBatteryConfig(
+            name="CarBattery",
+            system_id="SG1",
+            p_inv_custom=460,
+            e_bat_custom=0.3168,
             source_weight=1,
             charge=0,
             discharge=0,
