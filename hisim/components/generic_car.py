@@ -85,11 +85,27 @@ class CarConfig(cp.ConfigBase):
             name="Car",
             source_weight=1,
             fuel=lt.LoadTypes.ELECTRICITY,
-            consumption_per_km=0.15,
+            consumption_per_km=0.22,
             co2_footprint=8899.4,
             cost=44498.0,
             maintenance_cost_as_percentage_of_investment=0.02,
             lifetime=18,
+            consumption=0,
+        )
+        return config
+    
+    @classmethod
+    def get_default_eroller_config(cls) -> Any:
+        """Defines default configuration for electric vehicle - rollers."""
+        config = CarConfig(
+            name="Car",
+            source_weight=1,
+            fuel=lt.LoadTypes.ELECTRICITY,
+            consumption_per_km=0.016,
+            co2_footprint=8899.4, # need to be checked
+            cost=44498.0,  # need to be checked
+            maintenance_cost_as_percentage_of_investment=0.02,  # need to be checked
+            lifetime=18,  # need to be checked
             consumption=0,
         )
         return config
@@ -188,11 +204,19 @@ class Car(cp.Component):
         """Returns consumption and location of car in each timestep."""
 
         if self.config.fuel == lt.LoadTypes.ELECTRICITY:
-            watt_used = (
-                self.meters_driven[timestep]
-                * self.config.consumption_per_km
-                * (3600 / self.my_simulation_parameters.seconds_per_timestep)
-            )  # conversion Wh to W
+            # for e-roller
+            watt_used = 0
+            if self.meters_driven[timestep]>0.0:
+                watt_used = (
+                    138.5
+                    * self.config.consumption_per_km
+                    * (3600 / self.my_simulation_parameters.seconds_per_timestep)
+                )  # conversion Wh to W
+            # watt_used = (
+            #     self.meters_driven[timestep]
+            #     * self.config.consumption_per_km
+            #     * (3600 / self.my_simulation_parameters.seconds_per_timestep)
+            # )  # conversion Wh to W
             stsv.set_output_value(self.electricity_output, watt_used)
             stsv.set_output_value(self.car_location_output, self.car_location[timestep])
 

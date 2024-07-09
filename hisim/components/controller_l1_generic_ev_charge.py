@@ -64,7 +64,8 @@ class ChargingStationConfig(cp.ConfigBase):
         charging_station_set: JsonReference = ChargingStationSets.Charging_At_Home_with_03_7_kW,
     ) -> "ChargingStationConfig":
         """Returns default configuration of charging station and desired SOC Level."""
-        charging_power = float((charging_station_set.Name or "").split("with ")[1].split(" kW")[0])
+        # charging_power = float((charging_station_set.Name or "").split("with ")[1].split(" kW")[0])
+        charging_power = 0.46
         lower_threshold_charging_power = (
             charging_power * 1e3 * 0.1
         )  # 10 % of charging power for acceptable efficiencies
@@ -260,7 +261,7 @@ class L1Controller(cp.Component):
             return 0
         if soc < self.config.battery_set:
             return self.power
-        if soc > 0.7 and electricity_target <0:
+        if soc >= 0.7 and electricity_target < 0:
             return self.power * (-1)
                 
         if electricity_target > self.config.lower_threshold_charging_power:
@@ -320,7 +321,8 @@ class L1Controller(cp.Component):
             log.error(
                 'Charging location not known, check the input on the charging station set. It was set to "charging at home per default.'
             )
-        power = float(charging_station_string.partition("with ")[2].partition(" kW")[0]) * 1e3
+        # power = float(charging_station_string.partition("with ")[2].partition(" kW")[0]) * 1e3
+        power =  0.46 * 1e3
         self.power = power
 
     def write_to_report(self) -> List[str]:

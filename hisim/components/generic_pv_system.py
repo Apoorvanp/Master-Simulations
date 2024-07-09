@@ -113,7 +113,34 @@ class PVSystemConfig(ConfigBase):
             azimuth=180,
             tilt=30,
             source_weight=0,
-            location="Aachen",
+            location="Hamburg",
+            co2_footprint=power_in_watt * 1e-3 * 330.51,  # value from emission_factros_and_costs_devices.csv
+            cost=power_in_watt * 1e-3 * 794.41,  # value from emission_factros_and_costs_devices.csv
+            maintenance_cost_as_percentage_of_investment=0.01,  # source: https://solarenergie.de/stromspeicher/preise
+            lifetime=25,  # value from emission_factros_and_costs_devices.csv
+            predictive=False,
+            predictive_control=False,
+            prediction_horizon=None,
+        )
+    
+    @classmethod
+    def get_balcony_pv_system(cls) -> "PVSystemConfig":
+        """Gets a default PV system."""
+        power_in_watt = 600  # W
+        return PVSystemConfig(
+            time=2019,
+            power_in_watt=power_in_watt,
+            load_module_data=False,
+            integrate_inverter=True,
+            module_database=PVLibModuleAndInverterEnum.SANDIA_MODULE_DATABASE,
+            inverter_database=PVLibModuleAndInverterEnum.SANDIA_INVERTER_DATABASE,
+            module_name="Hanwha HSL60P6-PA-4-250T [2013]",
+            inverter_name="ABB__MICRO_0_25_I_OUTD_US_208_208V__CEC_2014_",
+            name="PVSystem",
+            azimuth=180,
+            tilt=30,
+            source_weight=0,
+            location="Hamburg",
             co2_footprint=power_in_watt * 1e-3 * 330.51,  # value from emission_factros_and_costs_devices.csv
             cost=power_in_watt * 1e-3 * 794.41,  # value from emission_factros_and_costs_devices.csv
             maintenance_cost_as_percentage_of_investment=0.01,  # source: https://solarenergie.de/stromspeicher/preise
