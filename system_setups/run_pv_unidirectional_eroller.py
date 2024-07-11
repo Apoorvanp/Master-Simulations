@@ -215,7 +215,7 @@ class HouseholdAdvancedHpEvPvBatteryConfig(SystemSetupConfigBase):
 
         if household_config.surplus_control_car:
             # lower threshold for soc of car battery in clever case. This enables more surplus charging
-            household_config.car_battery_controller_config.battery_set = 0.4
+            household_config.car_battery_controller_config.battery_set = 0.6
         else:
             household_config.car_battery_controller_config.battery_set = 1.0
 

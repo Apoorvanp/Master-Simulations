@@ -89,7 +89,7 @@ class HouseholdAdvancedHpEvPvBatteryConfig(SystemSetupConfigBase):
         """Get default HouseholdAdvancedHpEvPvBatteryConfig."""
 
         charging_station_set = ChargingStationSets.Charging_At_Home_with_11_kW
-        charging_power = 0.46
+        charging_power = 0.46 # in kW
         heating_reference_temperature_in_celsius: float = -7
         set_heating_threshold_outside_temperature_in_celsius: float = 16.0
         building_config = building.BuildingConfig.get_default_german_single_family_home(
@@ -215,7 +215,7 @@ class HouseholdAdvancedHpEvPvBatteryConfig(SystemSetupConfigBase):
 
         if household_config.surplus_control_car:
             # lower threshold for soc of car battery in clever case. This enables more surplus charging
-            household_config.car_battery_controller_config.battery_set = 0.4
+            household_config.car_battery_controller_config.battery_set = 0.6
         else:
             household_config.car_battery_controller_config.battery_set = 1.0
 
