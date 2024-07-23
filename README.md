@@ -73,7 +73,7 @@ Run simulations for the following household setups
 
 This branch includes the files to run the simulations for "A single person/student". 
 
-The following scenarios are included for "A couple at work" household profile in Hamburg, Germany
+The following scenarios are included for "A single person/student" household profile in Hamburg, Germany
 * Baseline - Without PV
 Run the python interpreter in the `HiSim/system_setups` directory with the following command:
 ```python
