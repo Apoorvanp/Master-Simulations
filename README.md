@@ -71,23 +71,16 @@ UTSP_API_KEY="OrjpZY93BcNWw8lKaMp0BEchbCc"
 Run simulations for the following household setups
 -----------------------
 
-This branch includes the files to run the simulations for "A couple at work" and "A couple with a kid, one at work and one at home". 
+This branch includes the files to run the simulations for "A single person/student". 
 
-The following scenario is included for "A couple at work" household profile in Hamburg, Germany
-* With 10kW peak PV and 10kWh battery and bidirectional charger for EV
+The following scenarios are included for "A couple at work" household profile in Hamburg, Germany
+
+* With 600 W plug-in PV and a bi-directional charger for E-roller
 Run the python interpreter in the `HiSim/system_setups` directory with the following command:
 ```python
-python ./hisim/hisim_main.py ./system_setups/run_couple_at_work_bidirectional.py
-```
-
-The following scenarios are included for "A couple with a kid, one at work and one at home" household profile in Hamburg, Germany
-* With 10kW peak PV and 10kWh battery and bidirectional charger for EV
-Run the python interpreter in the `HiSim/system_setups` directory with the following command:
-```python
-python ./hisim/hisim_main.py ./system_setups/run_couple_with_kid_bidirectional.py
+python ./hisim/hisim_main.py ./system_setups/run_single_person_bidirectional.py
 ```
 
 This command executes `hisim_main.py` on the python files implemented for each household type and scenario. The results can be visualized under directory `results`. 
 
 New simulations and household profile can be created by going through the simulations as part of the thesis and the HiSim docs.
-
