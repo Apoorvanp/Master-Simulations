@@ -120,7 +120,7 @@ class HouseholdAdvancedHpEvPvBatteryConfig(SystemSetupConfigBase):
             # total_base_area_in_m2=121.2,
             occupancy_config=loadprofilegenerator_utsp_connector.UtspLpgConnectorConfig(
                 data_acquisition_mode=loadprofilegenerator_utsp_connector.LpgDataAcquisitionMode.USE_UTSP,
-                household=Households.CHR01_Couple_both_at_Work,
+                household=Households.CHR45_Family_with_1_child_1_at_work_1_at_home,
                 energy_intensity=EnergyIntensityType.EnergySaving,
                 result_dir_path=utils.HISIMPATH["utsp_results"],
                 travel_route_set=TravelRouteSets.Travel_Route_Set_for_30km_Commuting_Distance,

@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from os import listdir
 from pathlib import Path
 from typing import Any, List, Optional
+import glob
 
 from dataclasses_json import dataclass_json
 from utspclient.helpers.lpgdata import (
@@ -105,9 +106,7 @@ class HouseholdAdvancedHpEvPvBatteryConfig(SystemSetupConfigBase):
             config=hds_controller_config
         )
 
-        pv_config = generic_pv_system.PVSystemConfig.get_scaled_pv_system(
-            rooftop_area_in_m2=my_building_information.scaled_rooftop_area_in_m2
-        )
+        pv_config = generic_pv_system.PVSystemConfig.get_default_pv_system()
 
         household_config = HouseholdAdvancedHpEvPvBatteryConfig(
             building_type="blub",
@@ -116,7 +115,7 @@ class HouseholdAdvancedHpEvPvBatteryConfig(SystemSetupConfigBase):
             # heatpump_controllable=False,
             surplus_control=False,
             surplus_control_building_temperature_modifier=False,
-            surplus_control_car=False,
+            surplus_control_car=True,
             # simulation_parameters=SimulationParameters.one_day_only(2022),
             # total_base_area_in_m2=121.2,
             occupancy_config=loadprofilegenerator_utsp_connector.UtspLpgConnectorConfig(
@@ -124,8 +123,8 @@ class HouseholdAdvancedHpEvPvBatteryConfig(SystemSetupConfigBase):
                 household=Households.CHR01_Couple_both_at_Work,
                 energy_intensity=EnergyIntensityType.EnergySaving,
                 result_dir_path=utils.HISIMPATH["utsp_results"],
-                travel_route_set=TravelRouteSets.Travel_Route_Set_for_10km_Commuting_Distance,
-                transportation_device_set=TransportationDeviceSets.Bus_and_one_30_km_h_Car,
+                travel_route_set=TravelRouteSets.Travel_Route_Set_for_30km_Commuting_Distance,
+                transportation_device_set=TransportationDeviceSets.Bus_and_one_60_km_h_Car,
                 charging_station_set=charging_station_set,
                 name="UTSPConnector",
                 consumption=0.0,
@@ -238,13 +237,6 @@ def setup_function(
         - Building
         - PV
         - Electricity Meter
-        - Advanced Heat Pump HPlib
-        - Advanced Heat Pump HPlib Controller
-        - Heat Distribution System
-        - Heat Distribution System Controller
-        - Simple Hot Water Storage
-
-        - DHW (Heatpump, Heatpumpcontroller, Storage; copied from modular_example)
         - Car (Electric Vehicle, Electric Vehicle Battery, Electric Vehicle Battery Controller)
         - Battery
         - EMS (necessary for Battery and Electric Vehicle)
@@ -285,11 +277,11 @@ def setup_function(
     clever = my_config.surplus_control
     my_sim.set_simulation_parameters(my_simulation_parameters)
 
-    # Build heat Distribution System Controller
-    my_heat_distribution_controller = heat_distribution_system.HeatDistributionController(
-        config=my_config.hds_controller_config,
-        my_simulation_parameters=my_simulation_parameters,
-    )
+    # # Build heat Distribution System Controller
+    # my_heat_distribution_controller = heat_distribution_system.HeatDistributionController(
+    #     config=my_config.hds_controller_config,
+    #     my_simulation_parameters=my_simulation_parameters,
+    # )
 
     # Build Occupancy
     my_occupancy_config = my_config.occupancy_config
@@ -299,7 +291,7 @@ def setup_function(
 
     # Build Weather
     my_weather = weather.Weather(
-        config=weather.WeatherConfig.get_default(weather.LocationEnum.AACHEN),
+        config=weather.WeatherConfig.get_default(weather.LocationEnum.HAMBURG),
         my_simulation_parameters=my_simulation_parameters,
     )
 
@@ -315,62 +307,62 @@ def setup_function(
         my_simulation_parameters=my_simulation_parameters,
     )
 
-    # Build Heat Distribution System
-    my_heat_distribution = heat_distribution_system.HeatDistribution(
-        my_simulation_parameters=my_simulation_parameters, config=my_config.hds_config
-    )
+    # # Build Heat Distribution System
+    # my_heat_distribution = heat_distribution_system.HeatDistribution(
+    #     my_simulation_parameters=my_simulation_parameters, config=my_config.hds_config
+    # )
 
-    # Build Heat Pump Controller
-    my_heat_pump_controller_config = my_config.hp_controller_config
-    my_heat_pump_controller_config.name = "HeatPumpHplibController"
+    # # Build Heat Pump Controller
+    # my_heat_pump_controller_config = my_config.hp_controller_config
+    # my_heat_pump_controller_config.name = "HeatPumpHplibController"
 
-    my_heat_pump_controller = advanced_heat_pump_hplib.HeatPumpHplibController(
-        config=my_heat_pump_controller_config,
-        my_simulation_parameters=my_simulation_parameters,
-    )
+    # my_heat_pump_controller = advanced_heat_pump_hplib.HeatPumpHplibController(
+    #     config=my_heat_pump_controller_config,
+    #     my_simulation_parameters=my_simulation_parameters,
+    # )
 
-    # Build Heat Pump
-    my_heat_pump_config = my_config.hp_config
-    my_heat_pump_config.name = "HeatPumpHPLib"
+    # # Build Heat Pump
+    # my_heat_pump_config = my_config.hp_config
+    # my_heat_pump_config.name = "HeatPumpHPLib"
 
-    my_heat_pump = advanced_heat_pump_hplib.HeatPumpHplib(
-        config=my_heat_pump_config,
-        my_simulation_parameters=my_simulation_parameters,
-    )
+    # my_heat_pump = advanced_heat_pump_hplib.HeatPumpHplib(
+    #     config=my_heat_pump_config,
+    #     my_simulation_parameters=my_simulation_parameters,
+    # )
 
-    # Build Heat Water Storage
-    my_simple_hot_water_storage = simple_hot_water_storage.SimpleHotWaterStorage(
-        config=my_config.simple_hot_water_storage_config,
-        my_simulation_parameters=my_simulation_parameters,
-    )
+    # # Build Heat Water Storage
+    # my_simple_hot_water_storage = simple_hot_water_storage.SimpleHotWaterStorage(
+    #     config=my_config.simple_hot_water_storage_config,
+    #     my_simulation_parameters=my_simulation_parameters,
+    # )
 
     # Build DHW
-    my_dhw_heatpump_config = my_config.dhw_heatpump_config
-    my_dhw_heatpump_controller_config = my_config.dhw_heatpump_controller_config
+    # my_dhw_heatpump_config = my_config.dhw_heatpump_config
+    # my_dhw_heatpump_controller_config = my_config.dhw_heatpump_controller_config
 
-    my_dhw_storage_config = my_config.dhw_storage_config
-    my_dhw_storage_config.name = "DHWStorage"
-    my_dhw_storage_config.compute_default_cycle(
-        temperature_difference_in_kelvin=my_dhw_heatpump_controller_config.t_max_heating_in_celsius
-        - my_dhw_heatpump_controller_config.t_min_heating_in_celsius
-    )
+    # my_dhw_storage_config = my_config.dhw_storage_config
+    # my_dhw_storage_config.name = "DHWStorage"
+    # my_dhw_storage_config.compute_default_cycle(
+    #     temperature_difference_in_kelvin=my_dhw_heatpump_controller_config.t_max_heating_in_celsius
+    #     - my_dhw_heatpump_controller_config.t_min_heating_in_celsius
+    # )
 
-    my_domnestic_hot_water_storage = generic_hot_water_storage_modular.HotWaterStorage(
-        my_simulation_parameters=my_simulation_parameters, config=my_dhw_storage_config
-    )
+    # my_domnestic_hot_water_storage = generic_hot_water_storage_modular.HotWaterStorage(
+    #     my_simulation_parameters=my_simulation_parameters, config=my_dhw_storage_config
+    # )
 
-    my_domnestic_hot_water_heatpump_controller = controller_l1_heatpump.L1HeatPumpController(
-        my_simulation_parameters=my_simulation_parameters,
-        config=my_dhw_heatpump_controller_config,
-    )
+    # my_domnestic_hot_water_heatpump_controller = controller_l1_heatpump.L1HeatPumpController(
+    #     my_simulation_parameters=my_simulation_parameters,
+    #     config=my_dhw_heatpump_controller_config,
+    # )
 
-    my_domnestic_hot_water_heatpump = generic_heat_pump_modular.ModularHeatPump(
-        config=my_dhw_heatpump_config, my_simulation_parameters=my_simulation_parameters
-    )
+    # my_domnestic_hot_water_heatpump = generic_heat_pump_modular.ModularHeatPump(
+    #     config=my_dhw_heatpump_config, my_simulation_parameters=my_simulation_parameters
+    # )
 
     # Build Electric Vehicle(s)
     # get names of all available cars
-    filepaths = listdir(utils.HISIMPATH["utsp_results"])
+    filepaths = glob.glob(utils.HISIMPATH["utsp_results"] + "/**", recursive=True)
     filepaths_location = [elem for elem in filepaths if "CarLocation." in elem]
     names = [elem.partition(",")[0].partition(".")[2] for elem in filepaths_location]
 
@@ -502,102 +494,102 @@ def setup_function(
     )
 
     # connect EMS with DHW
-    if clever:
-        my_domnestic_hot_water_heatpump_controller.connect_input(
-            my_domnestic_hot_water_heatpump_controller.StorageTemperatureModifier,
-            my_electricity_controller.component_name,
-            my_electricity_controller.DomesticHotWaterStorageTemperatureModifier,
-        )
-        my_electricity_controller.add_component_input_and_connect(
-            source_object_name=my_domnestic_hot_water_heatpump.component_name,
-            source_component_output=my_domnestic_hot_water_heatpump.ElectricityOutput,
-            source_load_type=lt.LoadTypes.ELECTRICITY,
-            source_unit=lt.Units.WATT,
-            source_tags=[
-                lt.ComponentType.HEAT_PUMP_DHW,
-                lt.InandOutputType.ELECTRICITY_CONSUMPTION_EMS_CONTROLLED,
-            ],
-            # source_weight=my_dhw_heatpump_config.source_weight,
-            source_weight=2,
-        )
+    # if clever:
+    #     my_domnestic_hot_water_heatpump_controller.connect_input(
+    #         my_domnestic_hot_water_heatpump_controller.StorageTemperatureModifier,
+    #         my_electricity_controller.component_name,
+    #         my_electricity_controller.DomesticHotWaterStorageTemperatureModifier,
+    #     )
+    #     my_electricity_controller.add_component_input_and_connect(
+    #         source_object_name=my_domnestic_hot_water_heatpump.component_name,
+    #         source_component_output=my_domnestic_hot_water_heatpump.ElectricityOutput,
+    #         source_load_type=lt.LoadTypes.ELECTRICITY,
+    #         source_unit=lt.Units.WATT,
+    #         source_tags=[
+    #             lt.ComponentType.HEAT_PUMP_DHW,
+    #             lt.InandOutputType.ELECTRICITY_CONSUMPTION_EMS_CONTROLLED,
+    #         ],
+    #         # source_weight=my_dhw_heatpump_config.source_weight,
+    #         source_weight=2,
+    #     )
 
-        my_electricity_controller.add_component_output(
-            source_output_name=lt.InandOutputType.ELECTRICITY_TARGET,
-            source_tags=[
-                lt.ComponentType.HEAT_PUMP_DHW,
-                lt.InandOutputType.ELECTRICITY_TARGET,
-            ],
-            # source_weight=my_domnestic_hot_water_heatpump.config.source_weight,
-            source_weight=2,
-            source_load_type=lt.LoadTypes.ELECTRICITY,
-            source_unit=lt.Units.WATT,
-            output_description="Target electricity for dhw heat pump.",
-        )
+        # my_electricity_controller.add_component_output(
+        #     source_output_name=lt.InandOutputType.ELECTRICITY_TARGET,
+        #     source_tags=[
+        #         lt.ComponentType.HEAT_PUMP_DHW,
+        #         lt.InandOutputType.ELECTRICITY_TARGET,
+        #     ],
+        #     # source_weight=my_domnestic_hot_water_heatpump.config.source_weight,
+        #     source_weight=2,
+        #     source_load_type=lt.LoadTypes.ELECTRICITY,
+        #     source_unit=lt.Units.WATT,
+        #     output_description="Target electricity for dhw heat pump.",
+        # )
 
-    else:
-        my_electricity_controller.add_component_input_and_connect(
-            source_object_name=my_domnestic_hot_water_heatpump.component_name,
-            source_component_output=my_domnestic_hot_water_heatpump.ElectricityOutput,
-            source_load_type=lt.LoadTypes.ELECTRICITY,
-            source_unit=lt.Units.WATT,
-            source_tags=[lt.InandOutputType.ELECTRICITY_CONSUMPTION_UNCONTROLLED],
-            source_weight=999,
-        )
+    # else:
+    #     my_electricity_controller.add_component_input_and_connect(
+    #         source_object_name=my_domnestic_hot_water_heatpump.component_name,
+    #         source_component_output=my_domnestic_hot_water_heatpump.ElectricityOutput,
+    #         source_load_type=lt.LoadTypes.ELECTRICITY,
+    #         source_unit=lt.Units.WATT,
+    #         source_tags=[lt.InandOutputType.ELECTRICITY_CONSUMPTION_UNCONTROLLED],
+    #         source_weight=999,
+    #     )
 
     # connect EMS with Heatpump
-    if clever:
-        my_heat_pump_controller.connect_input(
-            my_heat_pump_controller.SimpleHotWaterStorageTemperatureModifier,
-            my_electricity_controller.component_name,
-            my_electricity_controller.SpaceHeatingWaterStorageTemperatureModifier,
-        )
+    # if clever:
+    #     my_heat_pump_controller.connect_input(
+    #         my_heat_pump_controller.SimpleHotWaterStorageTemperatureModifier,
+    #         my_electricity_controller.component_name,
+    #         my_electricity_controller.SpaceHeatingWaterStorageTemperatureModifier,
+    #     )
 
-        my_electricity_controller.add_component_input_and_connect(
-            source_object_name=my_heat_pump.component_name,
-            source_component_output=my_heat_pump.ElectricalInputPower,
-            source_load_type=lt.LoadTypes.ELECTRICITY,
-            source_unit=lt.Units.WATT,
-            source_tags=[
-                lt.ComponentType.HEAT_PUMP_BUILDING,
-                lt.InandOutputType.ELECTRICITY_CONSUMPTION_EMS_CONTROLLED,
-            ],
-            source_weight=3,
-        )
+    #     my_electricity_controller.add_component_input_and_connect(
+    #         source_object_name=my_heat_pump.component_name,
+    #         source_component_output=my_heat_pump.ElectricalInputPower,
+    #         source_load_type=lt.LoadTypes.ELECTRICITY,
+    #         source_unit=lt.Units.WATT,
+    #         source_tags=[
+    #             lt.ComponentType.HEAT_PUMP_BUILDING,
+    #             lt.InandOutputType.ELECTRICITY_CONSUMPTION_EMS_CONTROLLED,
+    #         ],
+    #         source_weight=3,
+    #     )
 
-        my_electricity_controller.add_component_output(
-            source_output_name=lt.InandOutputType.ELECTRICITY_TARGET,
-            source_tags=[
-                lt.ComponentType.HEAT_PUMP_BUILDING,
-                lt.InandOutputType.ELECTRICITY_TARGET,
-            ],
-            source_weight=3,
-            source_load_type=lt.LoadTypes.ELECTRICITY,
-            source_unit=lt.Units.WATT,
-            output_description="Target electricity for Heat Pump. ",
-        )
+    #     my_electricity_controller.add_component_output(
+    #         source_output_name=lt.InandOutputType.ELECTRICITY_TARGET,
+    #         source_tags=[
+    #             lt.ComponentType.HEAT_PUMP_BUILDING,
+    #             lt.InandOutputType.ELECTRICITY_TARGET,
+    #         ],
+    #         source_weight=3,
+    #         source_load_type=lt.LoadTypes.ELECTRICITY,
+    #         source_unit=lt.Units.WATT,
+    #         output_description="Target electricity for Heat Pump. ",
+    #     )
 
-    else:
-        my_electricity_controller.add_component_input_and_connect(
-            source_object_name=my_heat_pump.component_name,
-            source_component_output=my_heat_pump.ElectricalInputPower,
-            source_load_type=lt.LoadTypes.ELECTRICITY,
-            source_unit=lt.Units.WATT,
-            source_tags=[lt.InandOutputType.ELECTRICITY_CONSUMPTION_UNCONTROLLED],
-            source_weight=999,
-        )
+    # else:
+    #     my_electricity_controller.add_component_input_and_connect(
+    #         source_object_name=my_heat_pump.component_name,
+    #         source_component_output=my_heat_pump.ElectricalInputPower,
+    #         source_load_type=lt.LoadTypes.ELECTRICITY,
+    #         source_unit=lt.Units.WATT,
+    #         source_tags=[lt.InandOutputType.ELECTRICITY_CONSUMPTION_UNCONTROLLED],
+    #         source_weight=999,
+    #     )
 
-    # connect EMS BuildingTemperatureModifier with set_heating_temperature_for_building_in_celsius
-    if my_config.surplus_control_building_temperature_modifier:
-        my_heat_distribution_controller.connect_input(
-            my_heat_distribution_controller.BuildingTemperatureModifier,
-            my_electricity_controller.component_name,
-            my_electricity_controller.BuildingIndoorTemperatureModifier,
-        )
-        my_building.connect_input(
-            my_building.BuildingTemperatureModifier,
-            my_electricity_controller.component_name,
-            my_electricity_controller.BuildingIndoorTemperatureModifier,
-        )
+    # # connect EMS BuildingTemperatureModifier with set_heating_temperature_for_building_in_celsius
+    # if my_config.surplus_control_building_temperature_modifier:
+    #     my_heat_distribution_controller.connect_input(
+    #         my_heat_distribution_controller.BuildingTemperatureModifier,
+    #         my_electricity_controller.component_name,
+    #         my_electricity_controller.BuildingIndoorTemperatureModifier,
+    #     )
+    #     my_building.connect_input(
+    #         my_building.BuildingTemperatureModifier,
+    #         my_electricity_controller.component_name,
+    #         my_electricity_controller.BuildingIndoorTemperatureModifier,
+    #     )
 
     # connect EMS with PV
     my_electricity_controller.add_component_input_and_connect(
@@ -655,14 +647,14 @@ def setup_function(
     my_sim.add_component(my_weather)
     my_sim.add_component(my_photovoltaic_system, connect_automatically=True)
     my_sim.add_component(my_building, connect_automatically=True)
-    my_sim.add_component(my_heat_pump, connect_automatically=True)
-    my_sim.add_component(my_heat_pump_controller, connect_automatically=True)
-    my_sim.add_component(my_heat_distribution, connect_automatically=True)
-    my_sim.add_component(my_heat_distribution_controller, connect_automatically=True)
-    my_sim.add_component(my_simple_hot_water_storage, connect_automatically=True)
-    my_sim.add_component(my_domnestic_hot_water_storage, connect_automatically=True)
-    my_sim.add_component(my_domnestic_hot_water_heatpump_controller, connect_automatically=True)
-    my_sim.add_component(my_domnestic_hot_water_heatpump, connect_automatically=True)
+    # my_sim.add_component(my_heat_pump, connect_automatically=True)
+    # my_sim.add_component(my_heat_pump_controller, connect_automatically=True)
+    # my_sim.add_component(my_heat_distribution, connect_automatically=True)
+    # my_sim.add_component(my_heat_distribution_controller, connect_automatically=True)
+    # my_sim.add_component(my_simple_hot_water_storage, connect_automatically=True)
+    # my_sim.add_component(my_domnestic_hot_water_storage, connect_automatically=True)
+    # my_sim.add_component(my_domnestic_hot_water_heatpump_controller, connect_automatically=True)
+    # my_sim.add_component(my_domnestic_hot_water_heatpump, connect_automatically=True)
     my_sim.add_component(my_electricity_meter)
     my_sim.add_component(my_advanced_battery)
     my_sim.add_component(my_electricity_controller)
