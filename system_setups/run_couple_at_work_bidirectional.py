@@ -123,8 +123,8 @@ class HouseholdAdvancedHpEvPvBatteryConfig(SystemSetupConfigBase):
                 household=Households.CHR01_Couple_both_at_Work,
                 energy_intensity=EnergyIntensityType.EnergySaving,
                 result_dir_path=utils.HISIMPATH["utsp_results"],
-                travel_route_set=TravelRouteSets.Travel_Route_Set_for_10km_Commuting_Distance,
-                transportation_device_set=TransportationDeviceSets.Bus_and_one_30_km_h_Car,
+                travel_route_set=TravelRouteSets.Travel_Route_Set_for_30km_Commuting_Distance,
+                transportation_device_set=TransportationDeviceSets.Bus_and_one_60_km_h_Car,
                 charging_station_set=charging_station_set,
                 name="UTSPConnector",
                 consumption=0.0,
@@ -298,7 +298,7 @@ def setup_function(
 
     # Build Weather
     my_weather = weather.Weather(
-        config=weather.WeatherConfig.get_default(weather.LocationEnum.AACHEN),
+        config=weather.WeatherConfig.get_default(weather.LocationEnum.HAMBURG),
         my_simulation_parameters=my_simulation_parameters,
     )
 

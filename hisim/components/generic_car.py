@@ -205,18 +205,18 @@ class Car(cp.Component):
 
         if self.config.fuel == lt.LoadTypes.ELECTRICITY:
             # for e-roller
-            watt_used = 0
-            if self.meters_driven[timestep]>0.0:
-                watt_used = (
-                    138.5
-                    * self.config.consumption_per_km
-                    * (3600 / self.my_simulation_parameters.seconds_per_timestep)
-                )  # conversion Wh to W
-            # watt_used = (
-            #     self.meters_driven[timestep]
-            #     * self.config.consumption_per_km
-            #     * (3600 / self.my_simulation_parameters.seconds_per_timestep)
-            # )  # conversion Wh to W
+            # watt_used = 0
+            # if self.meters_driven[timestep]>0.0:
+            #     watt_used = (
+            #         138.5
+            #         * self.config.consumption_per_km
+            #         * (3600 / self.my_simulation_parameters.seconds_per_timestep)
+            #     )  # conversion Wh to W
+            watt_used = (
+                self.meters_driven[timestep]
+                * self.config.consumption_per_km
+                * (3600 / self.my_simulation_parameters.seconds_per_timestep)
+            )  # conversion Wh to W
             stsv.set_output_value(self.electricity_output, watt_used)
             stsv.set_output_value(self.car_location_output, self.car_location[timestep])
 
