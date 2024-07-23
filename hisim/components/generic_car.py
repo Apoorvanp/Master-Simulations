@@ -212,11 +212,6 @@ class Car(cp.Component):
                     * self.config.consumption_per_km
                     * (3600 / self.my_simulation_parameters.seconds_per_timestep)
                 )  # conversion Wh to W
-            # watt_used = (
-            #     self.meters_driven[timestep]
-            #     * self.config.consumption_per_km
-            #     * (3600 / self.my_simulation_parameters.seconds_per_timestep)
-            # )  # conversion Wh to W
             stsv.set_output_value(self.electricity_output, watt_used)
             stsv.set_output_value(self.car_location_output, self.car_location[timestep])
 
